@@ -37,4 +37,21 @@ public class UserController {
         User user = userService.findByEmail(authentication.getName());
         return ResponseEntity.ok(UserResponseRequest.fromEntity(user));
     }
+
+    /** ADMIN-only route, enforced in SecurityConfig. */
+    @GetMapping("/dashboard/admin")
+    public ResponseEntity<UserResponseRequest> adminDashboard(Authentication authentication) {
+        User user = userService.findByEmail(authentication.getName());
+        return ResponseEntity.ok(UserResponseRequest.fromEntity(user));
+    }
+
+    /** ADMIN-only: list all registered users (for the account-management screen). */
+    @GetMapping
+    public ResponseEntity<java.util.List<UserResponseRequest>> listUsers() {
+        java.util.List<UserResponseRequest> users = userService.findAllUsers()
+                .stream()
+                .map(UserResponseRequest::fromEntity)
+                .toList();
+        return ResponseEntity.ok(users);
+    }
 }

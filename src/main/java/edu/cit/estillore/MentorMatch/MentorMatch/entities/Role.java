@@ -6,5 +6,6 @@ package edu.cit.estillore.MentorMatch.MentorMatch.entities;
  */
 public enum Role {
     STUDENT,
-    MENTOR
+    MENTOR,
+    ADMIN
 }

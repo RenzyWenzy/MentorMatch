@@ -1,7 +1,7 @@
 package edu.cit.estillore.MentorMatch.MentorMatch.config;
 
-import edu.cit.estillore.MentorMatch.MentorMatch.security.JwtAuthenticationFilter;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import edu.cit.estillore.MentorMatch.MentorMatch.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
@@ -71,6 +72,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/users/dashboard/student").hasRole("STUDENT")
                 .requestMatchers("/api/users/dashboard/mentor").hasRole("MENTOR")
+                .requestMatchers("/api/users/dashboard/admin").hasRole("ADMIN")
+                .requestMatchers("/api/users").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

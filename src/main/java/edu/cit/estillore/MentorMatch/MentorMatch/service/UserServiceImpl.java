@@ -1,13 +1,14 @@
 package edu.cit.estillore.MentorMatch.MentorMatch.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import edu.cit.estillore.MentorMatch.MentorMatch.dto.RegistrationRequest;
 import edu.cit.estillore.MentorMatch.MentorMatch.entities.Role;
 import edu.cit.estillore.MentorMatch.MentorMatch.entities.User;
 import edu.cit.estillore.MentorMatch.MentorMatch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +20,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User registerUser(RegistrationRequest request) {
+
+        if (request.getRole() == Role.ADMIN) {
+            throw new IllegalArgumentException("Admin accounts cannot be self-registered.");
+        }
+
+        if (emailExists(request.getEmail())) {
+            throw new IllegalArgumentException("An account with this email already exists.");
+        }
 
         if (emailExists(request.getEmail())) {
             throw new IllegalArgumentException("An account with this email already exists.");
@@ -61,6 +70,10 @@ public class UserServiceImpl implements UserService {
     public User findByEmail(String email) {
         return userRepository.findByEmail(email.trim().toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("No account found for email: " + email));
+    }
+    @Override
+    public java.util.List<User> findAllUsers() {
+        return userRepository.findAll();
     }
 
     private boolean isBlank(String value) {

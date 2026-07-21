@@ -10,6 +10,22 @@ import {
 import { fetchMyTutorProfile } from '../api/tutorProfile';
 import { fetchTutorReviews } from '../api/reviews';
 
+/** BR-002: only PENDING/REJECTED need a banner — APPROVED is the quiet default. */
+const APPROVAL_BANNER_META = {
+  PENDING: {
+    text: "Your tutor profile is pending admin review. Students won't see you in search until it's approved.",
+    background: '#fff8e6',
+    color: '#8a6116',
+    border: '#f3e1ad',
+  },
+  REJECTED: {
+    text: 'Your tutor profile was not approved. Update it and it will go back into the review queue.',
+    background: '#fdecea',
+    color: 'var(--color-danger)',
+    border: '#f6cdc9',
+  },
+};
+
 export default function MentorDashboard() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -62,6 +78,7 @@ export default function MentorDashboard() {
   const ratingLabel = profile?.averageRating != null
     ? `${profile.averageRating.toFixed(1)}★ (${profile.reviewCount})`
     : 'No ratings yet';
+  const approvalBanner = profile ? APPROVAL_BANNER_META[profile.approvalStatus] : null;
 
   return (
     <main className="dashboard-main">
@@ -74,6 +91,22 @@ export default function MentorDashboard() {
           Edit my profile
         </Link>
       </div>
+
+      {approvalBanner && (
+        <div
+          style={{
+            background: approvalBanner.background,
+            color: approvalBanner.color,
+            border: `1px solid ${approvalBanner.border}`,
+            borderRadius: 8,
+            padding: '10px 14px',
+            fontSize: '0.85rem',
+            marginBottom: 20,
+          }}
+        >
+          {approvalBanner.text}
+        </div>
+      )}
 
       <div className="card-grid">
         <div className="card">

@@ -22,6 +22,7 @@ edu\cit\estillore\MentorMatch\MentorMatch\user\UserRepository.class
 edu\cit\estillore\MentorMatch\MentorMatch\subject\SubjectController.class
 edu\cit\estillore\MentorMatch\MentorMatch\availability\AvailabilitySlotRequest.class
 edu\cit\estillore\MentorMatch\MentorMatch\booking\BookingStatus.class
+edu\cit\estillore\MentorMatch\MentorMatch\report\AdminReportService.class
 edu\cit\estillore\MentorMatch\MentorMatch\user\UserServiceImpl.class
 edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\ProficiencyLevel.class
 edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\TutorProfileResponse.class
@@ -57,8 +58,11 @@ edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\TutorSubject.class
 edu\cit\estillore\MentorMatch\MentorMatch\availability\AvailabilityService.class
 edu\cit\estillore\MentorMatch\MentorMatch\auth\AuthController.class
 edu\cit\estillore\MentorMatch\MentorMatch\review\ReviewRequest.class
+edu\cit\estillore\MentorMatch\MentorMatch\report\AdminReportServiceImpl.class
 edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\TutorProfileController.class
+edu\cit\estillore\MentorMatch\MentorMatch\report\AdminReportResponse.class
 edu\cit\estillore\MentorMatch\MentorMatch\user\User$UserBuilder.class
+edu\cit\estillore\MentorMatch\MentorMatch\report\AdminReportController.class
 edu\cit\estillore\MentorMatch\MentorMatch\review\ReviewService.class
 edu\cit\estillore\MentorMatch\MentorMatch\user\Role.class
 edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\TutorSubject$TutorSubjectBuilder.class
@@ -73,3 +77,4 @@ edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\TutorSubjectRequest.class
 edu\cit\estillore\MentorMatch\MentorMatch\auth\AuthResponse.class
 edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\TutorSubjectRepository.class
 edu\cit\estillore\MentorMatch\MentorMatch\availability\AvailabilityUpdateRequest.class
+edu\cit\estillore\MentorMatch\MentorMatch\tutorprofile\ApprovalStatus.class

@@ -60,6 +60,7 @@ export default function StudentDashboard() {
       setTutors(tutorList);
       setBookings(myBookings);
       setSubjects(subjectList);
+      setReviewedIds(new Set(myBookings.filter((b) => b.hasReview).map((b) => b.id)));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load data.');
     } finally {

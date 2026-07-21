@@ -21,6 +21,8 @@ public class TutorProfileResponse {
     private List<AvailabilitySlotResponse> availability;
     private Double averageRating; // null if the tutor has no reviews yet (FR-010)
     private long reviewCount;
+    private ApprovalStatus approvalStatus; // BR-002
+    private String rejectionReason; // only meaningful when approvalStatus == REJECTED
 
     /** Convenience overload for call sites that don't have review stats on hand. */
     public static TutorProfileResponse fromEntity(TutorProfile profile) {
@@ -38,7 +40,9 @@ public class TutorProfileResponse {
                 profile.getSubjects().stream().map(TutorSubjectResponse::fromEntity).collect(Collectors.toList()),
                 profile.getAvailability().stream().map(AvailabilitySlotResponse::fromEntity).collect(Collectors.toList()),
                 averageRating,
-                reviewCount
+                reviewCount,
+                profile.getApprovalStatus(),
+                profile.getRejectionReason()
         );
     }
 }

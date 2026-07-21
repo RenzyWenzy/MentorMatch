@@ -15,6 +15,7 @@ public class UserResponseRequest {
     private String program;
     private String expertise;
     private String department;
+    private boolean active;
 
     public static UserResponseRequest fromEntity(User user) {
         return new UserResponseRequest(
@@ -25,7 +26,8 @@ public class UserResponseRequest {
                 user.getStudentNumber(),
                 user.getProgram(),
                 user.getExpertise(),
-                user.getDepartment()
+                user.getDepartment(),
+                user.isActive()
         );
     }
 }

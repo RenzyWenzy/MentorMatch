@@ -36,6 +36,20 @@ public class TutorProfile {
     @Column(length = 1000)
     private String bio;
 
+    /**
+     * BR-002: a newly-created profile is not visible in search until an
+     * ADMIN approves it. Defaults to PENDING so this can't be bypassed by
+     * forgetting to set it explicitly at creation time.
+     */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
+
+    /** Set by an ADMIN when rejecting a profile; cleared again on approval. */
+    @Column(length = 500)
+    private String rejectionReason;
+
     @Builder.Default
     @OneToMany(mappedBy = "tutorProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TutorSubject> subjects = new ArrayList<>();

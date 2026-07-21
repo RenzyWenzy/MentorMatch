@@ -2,6 +2,7 @@ package edu.cit.estillore.MentorMatch.MentorMatch.user;
 
 import edu.cit.estillore.MentorMatch.MentorMatch.auth.RegistrationRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,7 @@ public class UserServiceImpl implements UserService {
                 .program(request.getRole() == Role.STUDENT ? request.getProgram() : null)
                 .expertise(request.getRole() == Role.MENTOR ? request.getExpertise() : null)
                 .department(request.getRole() == Role.MENTOR ? request.getDepartment() : null)
+                .active(true)
                 .build();
 
         return userRepository.save(user);
@@ -67,8 +69,58 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User findById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("No account found for id: " + id));
+    }
+
+    @Override
     public List<User> findAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public User activateUser(String adminEmail, Long userId) {
+        // adminEmail isn't needed to authorize this one (no self-lockout risk),
+        // but kept in the signature for symmetry with deactivate/remove and future auditing.
+        User target = findById(userId);
+        target.setActive(true);
+        return userRepository.save(target);
+    }
+
+    @Override
+    @Transactional
+    public User deactivateUser(String adminEmail, Long userId) {
+        User admin = findByEmail(adminEmail);
+        User target = findById(userId);
+
+        if (admin.getId().equals(target.getId())) {
+            throw new IllegalArgumentException("You cannot deactivate your own account.");
+        }
+
+        target.setActive(false);
+        return userRepository.save(target);
+    }
+
+    @Override
+    @Transactional
+    public void removeUser(String adminEmail, Long userId) {
+        User admin = findByEmail(adminEmail);
+        User target = findById(userId);
+
+        if (admin.getId().equals(target.getId())) {
+            throw new IllegalArgumentException("You cannot remove your own account.");
+        }
+
+        try {
+            userRepository.delete(target);
+            userRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new IllegalArgumentException(
+                    "This account has existing bookings, reviews, or a tutor profile and can't be removed. "
+                            + "Deactivate it instead.");
+        }
     }
 
     private boolean isBlank(String value) {

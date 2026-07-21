@@ -51,6 +51,16 @@ public class User {
     @Column(length = 100)
     private String department;
 
+    /**
+     * FR-011: whether this account can currently authenticate/use the system.
+     * Defaults to true on registration; an ADMIN can deactivate/reactivate.
+     * NOTE: your UserDetailsService / JwtAuthenticationFilter should check this
+     * flag and refuse authentication for inactive accounts (see accompanying notes).
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

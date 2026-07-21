@@ -3,7 +3,10 @@ package edu.cit.estillore.MentorMatch.MentorMatch.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -53,5 +56,32 @@ public class UserController {
                 .map(UserResponseRequest::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
+    }
+
+    /** ADMIN-only, enforced in SecurityConfig (FR-011). */
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseRequest> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(UserResponseRequest.fromEntity(userService.findById(id)));
+    }
+
+    /** ADMIN-only, enforced in SecurityConfig (FR-011). Reactivates a suspended account. */
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<UserResponseRequest> activate(Authentication authentication, @PathVariable Long id) {
+        User user = userService.activateUser(authentication.getName(), id);
+        return ResponseEntity.ok(UserResponseRequest.fromEntity(user));
+    }
+
+    /** ADMIN-only, enforced in SecurityConfig (FR-011). Suspends an account. */
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<UserResponseRequest> deactivate(Authentication authentication, @PathVariable Long id) {
+        User user = userService.deactivateUser(authentication.getName(), id);
+        return ResponseEntity.ok(UserResponseRequest.fromEntity(user));
+    }
+
+    /** ADMIN-only, enforced in SecurityConfig (FR-011). Permanently removes an account. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> remove(Authentication authentication, @PathVariable Long id) {
+        userService.removeUser(authentication.getName(), id);
+        return ResponseEntity.noContent().build();
     }
 }

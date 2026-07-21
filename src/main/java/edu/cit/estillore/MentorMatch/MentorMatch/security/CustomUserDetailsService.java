@@ -33,6 +33,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .username(user.getEmail())
                 .password(user.getPassword())
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
+                // FR-011: a deactivated account should no longer authenticate.
+                .disabled(!user.isActive())
                 .build();
     }
 }

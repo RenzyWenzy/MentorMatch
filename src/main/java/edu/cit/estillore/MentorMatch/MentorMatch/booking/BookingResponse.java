@@ -25,8 +25,9 @@ public class BookingResponse {
     private BookingStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime respondedAt;
+    private boolean hasReview;
 
-    public static BookingResponse fromEntity(Booking b) {
+    public static BookingResponse fromEntity(Booking b, boolean hasReview) {
         return new BookingResponse(
                 b.getId(),
                 b.getTutorProfile().getId(),
@@ -40,7 +41,8 @@ public class BookingResponse {
                 b.getEndTime(),
                 b.getStatus(),
                 b.getCreatedAt(),
-                b.getRespondedAt()
+                b.getRespondedAt(),
+                hasReview
         );
     }
 }

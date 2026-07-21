@@ -56,9 +56,38 @@ public class TutorProfileController {
         return ResponseEntity.ok(profiles);
     }
 
+    /** BR-002: a pending/rejected profile is only visible to its own mentor or an ADMIN. */
     @GetMapping("/{id}")
-    public ResponseEntity<TutorProfileResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(toResponseWithRating(tutorProfileService.findById(id)));
+    public ResponseEntity<TutorProfileResponse> getById(Authentication authentication, @PathVariable Long id) {
+        return ResponseEntity.ok(toResponseWithRating(
+                tutorProfileService.findVisibleById(authentication.getName(), id)));
+    }
+
+    /** ADMIN-only, enforced in SecurityConfig. Profiles awaiting review (BR-002). */
+    @GetMapping("/pending")
+    public ResponseEntity<List<TutorProfileResponse>> pending() {
+        List<TutorProfileResponse> profiles = tutorProfileService.findPending().stream()
+                .map(this::toResponseWithRating)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(profiles);
+    }
+
+    /** ADMIN-only, enforced in SecurityConfig. Makes the profile visible in search (BR-002). */
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<TutorProfileResponse> approve(Authentication authentication, @PathVariable Long id) {
+        return ResponseEntity.ok(toResponseWithRating(
+                tutorProfileService.approve(authentication.getName(), id)));
+    }
+
+    /** ADMIN-only, enforced in SecurityConfig. Keeps the profile hidden from search (BR-002). */
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<TutorProfileResponse> reject(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        String reason = body == null ? null : body.get("reason");
+        return ResponseEntity.ok(toResponseWithRating(
+                tutorProfileService.reject(authentication.getName(), id, reason)));
     }
 
     /** MENTOR-only, enforced in SecurityConfig. Returns the caller's own profile, if any. */

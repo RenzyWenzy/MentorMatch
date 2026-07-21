@@ -4,5 +4,7 @@ package edu.cit.estillore.MentorMatch.MentorMatch.notification;
 public enum NotificationType {
     BOOKING_CONFIRMED,
     BOOKING_DECLINED,
-    BOOKING_CANCELLED
+    BOOKING_CANCELLED,
+    PROFILE_APPROVED,
+    PROFILE_REJECTED
 }

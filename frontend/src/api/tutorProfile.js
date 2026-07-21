@@ -31,3 +31,21 @@ export async function searchTutorProfiles(params = {}) {
   const { data } = await apiClient.get('/tutor-profiles/search', { params: query });
   return data;
 }
+
+/** BR-002 — ADMIN-only: tutor profiles awaiting review. */
+export async function fetchPendingTutorProfiles() {
+  const { data } = await apiClient.get('/tutor-profiles/pending');
+  return data;
+}
+
+/** BR-002 — ADMIN-only: approves a profile, making it visible in search. */
+export async function approveTutorProfile(id) {
+  const { data } = await apiClient.put(`/tutor-profiles/${id}/approve`);
+  return data;
+}
+
+/** BR-002 — ADMIN-only: rejects a profile. `reason` is optional. */
+export async function rejectTutorProfile(id, reason) {
+  const { data } = await apiClient.put(`/tutor-profiles/${id}/reject`, { reason });
+  return data;
+}

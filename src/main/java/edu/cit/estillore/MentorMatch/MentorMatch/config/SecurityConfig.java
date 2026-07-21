@@ -74,26 +74,42 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/dashboard/student").hasRole("STUDENT")
                 .requestMatchers("/api/users/dashboard/mentor").hasRole("MENTOR")
                 .requestMatchers("/api/users/dashboard/admin").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                // FR-011: account management — id-scoped routes must be listed before the bare "/api/users" rule.
+                .requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/users/*/deactivate").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/users/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/users/*").hasRole("ADMIN")
                 .requestMatchers("/api/users").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/subjects").authenticated()
+                // FR-012: subject catalog. GET covers both the list and a single subject.
+                .requestMatchers(HttpMethod.GET, "/api/subjects/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/subjects").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/subjects/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/subjects/**").hasRole("ADMIN")
                 // FR-010: review listing needs to resolve before the generic tutor-profiles rule below.
                 .requestMatchers(HttpMethod.GET, "/api/tutor-profiles/*/reviews").authenticated()
                 .requestMatchers("/api/tutor-profiles/me").hasRole("MENTOR")
+                // BR-002: profile-approval workflow, must also resolve before the generic rule below.
+                .requestMatchers(HttpMethod.GET, "/api/tutor-profiles/pending").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/tutor-profiles/*/approve").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/tutor-profiles/*/reject").hasRole("ADMIN")
                 .requestMatchers("/api/tutor-profiles/**").authenticated()
                 .requestMatchers("/api/availability/me").hasRole("MENTOR")
                 .requestMatchers("/api/availability/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/bookings").hasRole("STUDENT")
                 .requestMatchers(HttpMethod.GET, "/api/bookings/me").hasRole("STUDENT")
                 .requestMatchers(HttpMethod.GET, "/api/bookings/tutor/me").hasRole("MENTOR")
-                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/accept").hasRole("MENTOR")
+                // NOTE: fixed to match BookingController, which exposes /confirm (not /accept),
+                // and added the previously-missing /complete matcher (FR-008).
+                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/confirm").hasRole("MENTOR")
                 .requestMatchers(HttpMethod.PUT, "/api/bookings/*/decline").hasRole("MENTOR")
+                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/complete").hasRole("MENTOR")
                 .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasRole("STUDENT")
                 // FR-009: only the student who booked the session can submit its review.
                 .requestMatchers(HttpMethod.POST, "/api/bookings/*/review").hasRole("STUDENT")
                 .requestMatchers("/api/bookings/**").authenticated()
+                // FR-013: tutoring-activity reports.
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

@@ -8,6 +8,28 @@ import SubjectProficiencyPicker from '../components/SubjectProficiencyPicker';
 const BIO_MAX = 1000;
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
+/** BR-002: how each approval state should read and look to the mentor. */
+const APPROVAL_STATUS_META = {
+  PENDING: {
+    label: "Pending review — you're not visible in search yet",
+    background: '#fff8e6',
+    color: '#8a6116',
+    border: '#f3e1ad',
+  },
+  APPROVED: {
+    label: 'Approved — visible to students in search',
+    background: '#eaf6ee',
+    color: 'var(--color-success, #2e7d32)',
+    border: '#cdebd7',
+  },
+  REJECTED: {
+    label: 'Not approved',
+    background: '#fdecea',
+    color: 'var(--color-danger)',
+    border: '#f6cdc9',
+  },
+};
+
 export default function MentorProfileEdit() {
   const navigate = useNavigate();
 
@@ -19,6 +41,9 @@ export default function MentorProfileEdit() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [isNewProfile, setIsNewProfile] = useState(false);
+
+  const [approvalStatus, setApprovalStatus] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -56,6 +81,8 @@ export default function MentorProfileEdit() {
               endTime: a.endTime,
             }))
           );
+          setApprovalStatus(profile.approvalStatus || null);
+          setRejectionReason(profile.rejectionReason || null);
         } catch (err) {
           // No profile yet is expected for a mentor's first visit — start blank
           // instead of surfacing it as a load error.
@@ -65,6 +92,8 @@ export default function MentorProfileEdit() {
             setBio('');
             setSubjectRows([]);
             setSlots([]);
+            setApprovalStatus(null);
+            setRejectionReason(null);
           } else {
             throw err;
           }
@@ -96,9 +125,15 @@ export default function MentorProfileEdit() {
 
     setSubmitting(true);
     try {
-      await saveMyTutorProfile({ bio, subjects: subjectRows });
+      const saved = await saveMyTutorProfile({ bio, subjects: subjectRows });
       setIsNewProfile(false);
-      setSavedMessage('Profile saved.');
+      setApprovalStatus(saved.approvalStatus || null);
+      setRejectionReason(saved.rejectionReason || null);
+      setSavedMessage(
+        saved.approvalStatus === 'PENDING'
+          ? 'Profile saved. An admin will review it before it appears in search.'
+          : 'Profile saved.'
+      );
     } catch (err) {
       setFormError(err.response?.data?.message || 'Could not save your profile.');
     } finally {
@@ -148,6 +183,8 @@ export default function MentorProfileEdit() {
     );
   }
 
+  const statusMeta = approvalStatus ? APPROVAL_STATUS_META[approvalStatus] : null;
+
   return (
     <main className="dashboard-main">
       <div className="dashboard-header">
@@ -163,6 +200,26 @@ export default function MentorProfileEdit() {
 
       {!loadError && (
         <>
+          {statusMeta && (
+            <div
+              style={{
+                background: statusMeta.background,
+                color: statusMeta.color,
+                border: `1px solid ${statusMeta.border}`,
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: '0.85rem',
+                marginBottom: 16,
+                maxWidth: 640,
+              }}
+            >
+              <strong>{statusMeta.label}</strong>
+              {approvalStatus === 'REJECTED' && rejectionReason && (
+                <p style={{ margin: '6px 0 0' }}>{rejectionReason}</p>
+              )}
+            </div>
+          )}
+
           <div className="card" style={{ maxWidth: 640 }}>
             {formError && <div className="form-error-banner">{formError}</div>}
             {savedMessage && (

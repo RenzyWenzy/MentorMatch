@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchAllUsers } from '../api/auth';
+import SubjectManager from '../components/SubjectManager';
 
 const ROLE_FILTERS = ['ALL', 'STUDENT', 'MENTOR', 'ADMIN'];
 
@@ -123,15 +124,11 @@ export default function AdminDashboard() {
         )}
       </section>
 
+      <SubjectManager />
+
       <section>
         <h2 style={{ fontSize: '1.05rem', marginBottom: 12 }}>Coming next</h2>
         <div className="card-grid">
-          <div className="card">
-            <h3>Subject catalog</h3>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-              Manage the list of subjects available for tutoring/mentoring matches.
-            </p>
-          </div>
           <div className="card">
             <h3>Tutor approvals</h3>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>

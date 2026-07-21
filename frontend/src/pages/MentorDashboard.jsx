@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function MentorDashboard() {
@@ -5,9 +6,14 @@ export default function MentorDashboard() {
 
   return (
     <main className="dashboard-main">
-      <div className="dashboard-header">
-        <h1>Welcome, {user.fullName}</h1>
-        <p>Mentor dashboard — manage your mentees and availability.</p>
+      <div className="dashboard-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <h1>Welcome, {user.fullName}</h1>
+          <p>Mentor dashboard — manage your mentees and availability.</p>
+        </div>
+        <Link to="/dashboard/mentor/profile" className="btn btn-primary" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          Edit my profile
+        </Link>
       </div>
 
       <div className="card-grid">

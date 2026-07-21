@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentDashboard from './pages/StudentDashboard';
 import MentorDashboard from './pages/MentorDashboard';
+import MentorProfileEdit from './pages/MentorProfileEdit';
 import AdminDashboard from './pages/AdminDashboard';
 
 function Shell({ children }) {
@@ -45,6 +46,14 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={['MENTOR']}>
                   <MentorDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/mentor/profile"
+              element={
+                <ProtectedRoute allowedRoles={['MENTOR']}>
+                  <MentorProfileEdit />
                 </ProtectedRoute>
               }
             />

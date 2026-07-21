@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -52,7 +53,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
@@ -74,10 +75,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/dashboard/mentor").hasRole("MENTOR")
                 .requestMatchers("/api/users/dashboard/admin").hasRole("ADMIN")
                 .requestMatchers("/api/users").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/subjects").authenticated()
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/subjects").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/subjects/**").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/subjects/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/subjects").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/subjects").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/subjects/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/subjects/**").hasRole("ADMIN")
                 .requestMatchers("/api/tutor-profiles/me").hasRole("MENTOR")
                 .requestMatchers("/api/tutor-profiles/**").authenticated()
                 .requestMatchers("/api/availability/me").hasRole("MENTOR")
@@ -90,4 +91,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

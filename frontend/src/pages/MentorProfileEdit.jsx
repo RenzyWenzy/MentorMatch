@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchMyTutorProfile, saveMyTutorProfile } from '../api/tutorProfile';
 import { fetchSubjects } from '../api/subjects';
+import { replaceMyAvailability } from '../api/availability';
 import SubjectProficiencyPicker from '../components/SubjectProficiencyPicker';
 
 const BIO_MAX = 1000;
+const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
 export default function MentorProfileEdit() {
   const navigate = useNavigate();
@@ -12,6 +14,7 @@ export default function MentorProfileEdit() {
   const [subjects, setSubjects] = useState([]);
   const [bio, setBio] = useState('');
   const [subjectRows, setSubjectRows] = useState([]); // [{ subjectId, proficiencyLevel }]
+  const [slots, setSlots] = useState([]); // [{ dayOfWeek, startTime, endTime }]
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -20,6 +23,10 @@ export default function MentorProfileEdit() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [savedMessage, setSavedMessage] = useState('');
+
+  const [savingAvailability, setSavingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [availabilitySaved, setAvailabilitySaved] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +49,13 @@ export default function MentorProfileEdit() {
               proficiencyLevel: s.proficiencyLevel,
             }))
           );
+          setSlots(
+            (profile.availability || []).map((a) => ({
+              dayOfWeek: a.dayOfWeek,
+              startTime: a.startTime,
+              endTime: a.endTime,
+            }))
+          );
         } catch (err) {
           // No profile yet is expected for a mentor's first visit — start blank
           // instead of surfacing it as a load error.
@@ -50,6 +64,7 @@ export default function MentorProfileEdit() {
             setIsNewProfile(true);
             setBio('');
             setSubjectRows([]);
+            setSlots([]);
           } else {
             throw err;
           }
@@ -91,6 +106,40 @@ export default function MentorProfileEdit() {
     }
   };
 
+  function addSlot() {
+    setSlots((prev) => [...prev, { dayOfWeek: 'MONDAY', startTime: '', endTime: '' }]);
+  }
+
+  function updateSlot(index, field, value) {
+    setSlots((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
+  }
+
+  function removeSlot(index) {
+    setSlots((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSaveAvailability() {
+    setAvailabilityError('');
+    setAvailabilitySaved('');
+
+    if (isNewProfile) {
+      setAvailabilityError('Save your profile (bio and subjects) before setting availability.');
+      return;
+    }
+
+    setSavingAvailability(true);
+    try {
+      await replaceMyAvailability(slots);
+      setAvailabilitySaved('Availability saved.');
+    } catch (err) {
+      const fieldErrors = err.response?.data?.fieldErrors;
+      const firstFieldError = fieldErrors ? Object.values(fieldErrors)[0] : null;
+      setAvailabilityError(firstFieldError || err.response?.data?.message || 'Could not save availability.');
+    } finally {
+      setSavingAvailability(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="dashboard-main">
@@ -106,81 +155,183 @@ export default function MentorProfileEdit() {
         <p>
           {isNewProfile
             ? "You don't have a tutor profile yet — fill this out so students can find you."
-            : 'Update your bio and the subjects you tutor.'}
+            : 'Update your bio, subjects, and weekly availability.'}
         </p>
       </div>
 
       {loadError && <div className="form-error-banner">{loadError}</div>}
 
       {!loadError && (
-        <div className="card" style={{ maxWidth: 640 }}>
-          {formError && <div className="form-error-banner">{formError}</div>}
-          {savedMessage && (
-            <div
-              style={{
-                background: '#eaf6ee',
-                color: 'var(--color-success)',
-                border: '1px solid #cdebd7',
-                borderRadius: 8,
-                padding: '10px 14px',
-                fontSize: '0.85rem',
-                marginBottom: 16,
-              }}
-            >
-              {savedMessage}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="form-field">
-              <label htmlFor="mentor-bio">Bio</label>
-              <textarea
-                id="mentor-bio"
-                name="bio"
-                rows={5}
-                maxLength={BIO_MAX}
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell students a bit about your background and how you can help."
+        <>
+          <div className="card" style={{ maxWidth: 640 }}>
+            {formError && <div className="form-error-banner">{formError}</div>}
+            {savedMessage && (
+              <div
                 style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid var(--color-border)',
+                  background: '#eaf6ee',
+                  color: 'var(--color-success)',
+                  border: '1px solid #cdebd7',
                   borderRadius: 8,
-                  fontSize: '0.9rem',
-                  fontFamily: 'inherit',
-                  resize: 'vertical',
+                  padding: '10px 14px',
+                  fontSize: '0.85rem',
+                  marginBottom: 16,
                 }}
-              />
-              <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 4 }}>
-                {bio.length}/{BIO_MAX}
+              >
+                {savedMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="form-field">
+                <label htmlFor="mentor-bio">Bio</label>
+                <textarea
+                  id="mentor-bio"
+                  name="bio"
+                  rows={5}
+                  maxLength={BIO_MAX}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell students a bit about your background and how you can help."
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
+                    fontSize: '0.9rem',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                  }}
+                />
+                <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 4 }}>
+                  {bio.length}/{BIO_MAX}
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label>Subjects &amp; proficiency</label>
+                <SubjectProficiencyPicker
+                  subjects={subjects}
+                  value={subjectRows}
+                  onChange={setSubjectRows}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <button className="btn btn-primary" type="submit" disabled={submitting}>
+                  {submitting ? 'Saving…' : 'Save profile'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+                  onClick={() => navigate('/dashboard/mentor')}
+                >
+                  Back to dashboard
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="card" style={{ maxWidth: 640, marginTop: 24 }}>
+            <h3 style={{ marginTop: 0 }}>Weekly availability</h3>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+              Set the recurring times you're available for tutoring sessions. Students can only book within these slots.
+            </p>
+
+            {availabilityError && <div className="form-error-banner">{availabilityError}</div>}
+            {availabilitySaved && (
+              <div
+                style={{
+                  background: '#eaf6ee',
+                  color: 'var(--color-success)',
+                  border: '1px solid #cdebd7',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  fontSize: '0.85rem',
+                  marginBottom: 16,
+                }}
+              >
+                {availabilitySaved}
+              </div>
+            )}
+
+            <div className="form-field">
+              {slots.length === 0 && (
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                  No availability set yet. Add a time slot below.
+                </p>
+              )}
+
+              <div style={{ display: 'grid', gap: 10 }}>
+                {slots.map((slot, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <select
+                      value={slot.dayOfWeek}
+                      onChange={(e) => updateSlot(i, 'dayOfWeek', e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 8,
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      {DAYS.map((d) => (
+                        <option key={d} value={d}>{d.charAt(0) + d.slice(1).toLowerCase()}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="time"
+                      value={slot.startTime}
+                      onChange={(e) => updateSlot(i, 'startTime', e.target.value)}
+                      required
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 8,
+                        fontSize: '0.85rem',
+                      }}
+                    />
+                    <span style={{ color: 'var(--color-text-muted)' }}>to</span>
+                    <input
+                      type="time"
+                      value={slot.endTime}
+                      onChange={(e) => updateSlot(i, 'endTime', e.target.value)}
+                      required
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 8,
+                        fontSize: '0.85rem',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeSlot(i)}
+                      className="btn btn-ghost"
+                      style={{ color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="form-field">
-              <label>Subjects &amp; proficiency</label>
-              <SubjectProficiencyPicker
-                subjects={subjects}
-                value={subjectRows}
-                onChange={setSubjectRows}
-              />
-            </div>
-
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button className="btn btn-primary" type="submit" disabled={submitting}>
-                {submitting ? 'Saving…' : 'Save profile'}
+              <button type="button" onClick={addSlot} className="btn btn-ghost" style={{ color: 'var(--color-text)', border: '1px solid var(--color-border)' }}>
+                + Add time slot
               </button>
               <button
                 type="button"
-                className="btn btn-ghost"
-                style={{ color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
-                onClick={() => navigate('/dashboard/mentor')}
+                onClick={handleSaveAvailability}
+                className="btn btn-primary"
+                disabled={savingAvailability}
               >
-                Back to dashboard
+                {savingAvailability ? 'Saving…' : 'Save availability'}
               </button>
             </div>
-          </form>
-        </div>
+          </div>
+        </>
       )}
     </main>
   );

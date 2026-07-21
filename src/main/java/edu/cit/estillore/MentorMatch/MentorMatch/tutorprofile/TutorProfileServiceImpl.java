@@ -1,16 +1,19 @@
 package edu.cit.estillore.MentorMatch.MentorMatch.tutorprofile;
 
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import edu.cit.estillore.MentorMatch.MentorMatch.subject.Subject;
 import edu.cit.estillore.MentorMatch.MentorMatch.subject.SubjectRepository;
 import edu.cit.estillore.MentorMatch.MentorMatch.user.Role;
 import edu.cit.estillore.MentorMatch.MentorMatch.user.User;
 import edu.cit.estillore.MentorMatch.MentorMatch.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -66,5 +69,28 @@ public class TutorProfileServiceImpl implements TutorProfileService {
     @Override
     public List<TutorProfile> findAll() {
         return tutorProfileRepository.findAll();
+    }
+
+    @Override
+    public List<TutorProfile> search(Long subjectId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
+        boolean filterBySlot = dayOfWeek != null && startTime != null && endTime != null;
+
+        List<TutorProfile> results = new ArrayList<>();
+        for (TutorProfile profile : tutorProfileRepository.findAll()) {
+            if (subjectId != null && profile.getSubjects().stream()
+                    .noneMatch(ts -> ts.getSubject().getId().equals(subjectId))) {
+                continue;
+            }
+
+            if (filterBySlot && profile.getAvailability().stream()
+                    .noneMatch(a -> a.getDayOfWeek() == dayOfWeek
+                            && !startTime.isBefore(a.getStartTime())
+                            && !endTime.isAfter(a.getEndTime()))) {
+                continue;
+            }
+
+            results.add(profile);
+        }
+        return results;
     }
 }

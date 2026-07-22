@@ -1,5 +1,7 @@
 package edu.cit.estillore.mentormatch.ui.tutor
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,8 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import edu.cit.estillore.mentormatch.data.model.DayOfWeek
 import edu.cit.estillore.mentormatch.data.model.TutorProfile
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 /**
  * Android equivalent of the tutor-search part of StudentDashboard.jsx (not
@@ -99,6 +107,15 @@ fun TutorSearchScreen(viewModel: TutorSearchViewModel) {
             text = { Text(it) }
         )
     }
+
+    state.bookingError?.let {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissBookingMessages() },
+            confirmButton = { TextButton(onClick = { viewModel.dismissBookingMessages() }) { Text("OK") } },
+            title = { Text("Booking failed") },
+            text = { Text(it) }
+        )
+    }
 }
 
 @Composable
@@ -139,10 +156,16 @@ private fun BookSessionDialog(
     onConfirm: (subjectId: Long, date: String, start: String, end: String) -> Unit
 ) {
     var subjectId by remember { mutableStateOf(tutor.subjects.firstOrNull()?.subjectId) }
-    var date by remember { mutableStateOf("") }
-    var start by remember { mutableStateOf("") }
-    var end by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf<LocalDate?>(null) }
+    var start by remember { mutableStateOf<LocalTime?>(null) }
+    var end by remember { mutableStateOf<LocalTime?>(null) }
     var subjectMenuExpanded by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
+
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -164,19 +187,138 @@ private fun BookSessionDialog(
                         }
                     }
                 }
-                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Date (YYYY-MM-DD)") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = start, onValueChange = { start = it }, label = { Text("Start time (HH:mm)") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = end, onValueChange = { end = it }, label = { Text("End time (HH:mm)") }, modifier = Modifier.fillMaxWidth())
+
+                val dateInteractionSource = remember { MutableInteractionSource() }
+                LaunchedEffect(dateInteractionSource) {
+                    dateInteractionSource.interactions.collect {
+                        if (it is PressInteraction.Release) showDatePicker = true
+                    }
+                }
+                OutlinedTextField(
+                    value = date?.format(dateFormatter) ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Date") },
+                    placeholder = { Text("Select a date") },
+                    interactionSource = dateInteractionSource,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                val startInteractionSource = remember { MutableInteractionSource() }
+                LaunchedEffect(startInteractionSource) {
+                    startInteractionSource.interactions.collect {
+                        if (it is PressInteraction.Release) showStartPicker = true
+                    }
+                }
+                OutlinedTextField(
+                    value = start?.format(timeFormatter) ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Start time") },
+                    placeholder = { Text("Select a start time") },
+                    interactionSource = startInteractionSource,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                val endInteractionSource = remember { MutableInteractionSource() }
+                LaunchedEffect(endInteractionSource) {
+                    endInteractionSource.interactions.collect {
+                        if (it is PressInteraction.Release) showEndPicker = true
+                    }
+                }
+                OutlinedTextField(
+                    value = end?.format(timeFormatter) ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("End time") },
+                    placeholder = { Text("Select an end time") },
+                    interactionSource = endInteractionSource,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { subjectId?.let { onConfirm(it, date, start, end) } },
-                enabled = !bookingInProgress && subjectId != null && date.isNotBlank() && start.isNotBlank() && end.isNotBlank()
+                onClick = {
+                    val sid = subjectId
+                    val d = date
+                    val s = start
+                    val e = end
+                    if (sid != null && d != null && s != null && e != null) {
+                        onConfirm(sid, d.format(dateFormatter), s.format(timeFormatter), e.format(timeFormatter))
+                    }
+                },
+                enabled = !bookingInProgress && subjectId != null && date != null && start != null && end != null
             ) {
                 Text(if (bookingInProgress) "Booking…" else "Request booking")
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                    }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showStartPicker) {
+        TimePickerDialog(
+            initialTime = start,
+            onDismiss = { showStartPicker = false },
+            onConfirm = { start = it; showStartPicker = false }
+        )
+    }
+
+    if (showEndPicker) {
+        TimePickerDialog(
+            initialTime = end,
+            onDismiss = { showEndPicker = false },
+            onConfirm = { end = it; showEndPicker = false }
+        )
+    }
+}
+
+/** Material3 has no stock TimePickerDialog (unlike DatePickerDialog), so this wraps TimePicker in a Dialog. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun TimePickerDialog(
+    initialTime: LocalTime?,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalTime) -> Unit
+) {
+    val timeState = rememberTimePickerState(
+        initialHour = initialTime?.hour ?: 9,
+        initialMinute = initialTime?.minute ?: 0,
+        is24Hour = true
+    )
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+            ) {
+                TimePicker(state = timeState)
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = { onConfirm(LocalTime.of(timeState.hour, timeState.minute)) }) { Text("OK") }
+                }
+            }
+        }
+    }
 }

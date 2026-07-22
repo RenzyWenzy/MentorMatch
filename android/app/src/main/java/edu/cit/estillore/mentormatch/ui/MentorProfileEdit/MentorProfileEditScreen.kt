@@ -1,8 +1,12 @@
 package edu.cit.estillore.mentormatch.ui.tutor
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,6 +15,9 @@ import androidx.compose.ui.unit.dp
 import edu.cit.estillore.mentormatch.data.model.ApprovalStatus
 import edu.cit.estillore.mentormatch.data.model.AvailabilitySlot
 import edu.cit.estillore.mentormatch.data.model.DayOfWeek
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 private fun approvalLabel(status: ApprovalStatus) = when (status) {
     ApprovalStatus.PENDING -> "Pending review — you're not visible in search yet"
@@ -149,6 +156,16 @@ private fun AvailabilitySlotRow(
 ) {
     var dayMenuExpanded by remember { mutableStateOf(false) }
 
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    fun parseTime(raw: String): LocalTime? = try {
+        LocalTime.parse(raw, timeFormatter)
+    } catch (e: DateTimeParseException) {
+        null
+    }
+
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -176,21 +193,56 @@ private fun AvailabilitySlotRow(
             }
         }
 
+        val startInteractionSource = remember { MutableInteractionSource() }
+        LaunchedEffect(startInteractionSource) {
+            startInteractionSource.interactions.collect {
+                if (it is PressInteraction.Release) showStartPicker = true
+            }
+        }
         OutlinedTextField(
             value = slot.startTime,
-            onValueChange = { onChange(slot.copy(startTime = it)) },
-            label = { Text("Start (HH:mm)") },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Start time") },
+            placeholder = { Text("Select a time") },
+            interactionSource = startInteractionSource,
             modifier = Modifier.weight(1f)
         )
+
+        val endInteractionSource = remember { MutableInteractionSource() }
+        LaunchedEffect(endInteractionSource) {
+            endInteractionSource.interactions.collect {
+                if (it is PressInteraction.Release) showEndPicker = true
+            }
+        }
         OutlinedTextField(
             value = slot.endTime,
-            onValueChange = { onChange(slot.copy(endTime = it)) },
-            label = { Text("End (HH:mm)") },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("End time") },
+            placeholder = { Text("Select a time") },
+            interactionSource = endInteractionSource,
             modifier = Modifier.weight(1f)
         )
 
         IconButton(onClick = onRemove) {
-            Icon(androidx.compose.material.icons.Icons.Default.Close, contentDescription = "Remove slot")
+            Icon(Icons.Default.Close, contentDescription = "Remove slot")
         }
+    }
+
+    if (showStartPicker) {
+        TimePickerDialog(
+            initialTime = parseTime(slot.startTime),
+            onDismiss = { showStartPicker = false },
+            onConfirm = { onChange(slot.copy(startTime = it.format(timeFormatter))); showStartPicker = false }
+        )
+    }
+
+    if (showEndPicker) {
+        TimePickerDialog(
+            initialTime = parseTime(slot.endTime),
+            onDismiss = { showEndPicker = false },
+            onConfirm = { onChange(slot.copy(endTime = it.format(timeFormatter))); showEndPicker = false }
+        )
     }
 }

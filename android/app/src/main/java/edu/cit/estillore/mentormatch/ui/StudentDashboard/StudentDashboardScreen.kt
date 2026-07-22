@@ -8,7 +8,10 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import edu.cit.estillore.mentormatch.data.model.Booking
 import edu.cit.estillore.mentormatch.data.model.BookingStatus
 import edu.cit.estillore.mentormatch.ui.notification.NotificationBell
@@ -28,6 +31,19 @@ fun StudentDashboardScreen(
     val state by viewModel.uiState.collectAsState()
     var tab by remember { mutableStateOf(0) }
     var reviewTarget by remember { mutableStateOf<Booking?>(null) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.load()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(tab) {
+        if (tab == 0) viewModel.load()
+    }
 
     Scaffold(
         topBar = {

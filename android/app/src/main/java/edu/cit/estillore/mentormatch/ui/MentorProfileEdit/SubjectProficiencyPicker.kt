@@ -1,6 +1,8 @@
 package edu.cit.estillore.mentormatch.ui.tutor
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -100,7 +102,7 @@ fun SubjectProficiencyPicker(
                 }
 
                 IconButton(onClick = { onChange(value.filterIndexed { i, _ -> i != index }) }) {
-                    Icon(androidx.compose.material.icons.Icons.Default.Close, contentDescription = "Remove subject")
+                    Icon(Icons.Default.Close, contentDescription = "Remove subject")
                 }
             }
         }

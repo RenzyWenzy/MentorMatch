@@ -152,7 +152,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         java.time.LocalDateTime sessionEnd = java.time.LocalDateTime.of(booking.getSessionDate(), booking.getEndTime());
-        if (sessionEnd.isAfter(java.time.LocalDateTime.now("Asia/Manila"))) {
+        if (sessionEnd.isAfter(java.time.LocalDateTime.now(ZoneId.of("Asia/Manila")))) {
             throw new IllegalArgumentException("This session hasn't ended yet.");
         }
 

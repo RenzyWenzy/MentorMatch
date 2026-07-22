@@ -25,7 +25,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
  */
 object NetworkModule {
 
-    private const val BASE_URL = "http://192.168.1.13:8080"
+    private const val BASE_URL = "https://mentormatch-7vz1.onrender.com"
 
     private var cachedRetrofit: Retrofit? = null
 

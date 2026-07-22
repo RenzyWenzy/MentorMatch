@@ -18,6 +18,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            /*buildConfigField("String", "BASE_URL", "\"https://mentormatch-7vz1.onrender.com\"")*/
         }
     }
 
